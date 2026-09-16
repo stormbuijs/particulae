@@ -16,6 +16,9 @@
     <Filter Include="Math">
       <UniqueIdentifier>{8ca29ffd-4723-4187-bfa8-01a057189761}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Physics">
+      <UniqueIdentifier>{5a9ba262-7f37-4d95-86f6-03e0a4a046b7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Math\Real.h">
@@ -23,6 +26,12 @@
     </ClInclude>
     <ClInclude Include="src\Math\Vector2.h">
       <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Physics\Particle.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Physics\Element.h">
+      <Filter>Physics</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
