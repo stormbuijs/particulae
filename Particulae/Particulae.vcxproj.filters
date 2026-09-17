@@ -19,6 +19,12 @@
     <Filter Include="Physics">
       <UniqueIdentifier>{5a9ba262-7f37-4d95-86f6-03e0a4a046b7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine">
+      <UniqueIdentifier>{aaf008b7-4681-45cd-bc70-995eba3beef9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Rendering">
+      <UniqueIdentifier>{ec6aa767-fd76-4dc1-b20f-ec5b102a4601}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Math\Real.h">
@@ -33,5 +39,22 @@
     <ClInclude Include="src\Physics\Element.h">
       <Filter>Physics</Filter>
     </ClInclude>
+    <ClInclude Include="src\Physics\SimulationConfiguration.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Physics\Simulation.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Engine.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Rendering\Camera.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
