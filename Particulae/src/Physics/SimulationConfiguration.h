@@ -49,6 +49,10 @@ struct SimulationConfiguration
 	Real nucleusRadius = 12.0;
 
 
+	// Aantal positie-relaxatie-iteraties in PreSolve()
+	int preSolveIterationCount = 20;
+
+
 	// Veiligheidsgrens
 
 	Real minimumDistance = 0.0001;

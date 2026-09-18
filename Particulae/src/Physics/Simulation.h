@@ -141,11 +141,87 @@ public:
 
 
 
-	// Eén vaste physics-stap.
+	// Eén vaste physics-stap met Velocity Verlet met dubbele krachNitevaluatie.
 
 	void Step(Real dt)
 	{
+		// Eerste krachtevaluatie.
 
+		ApplyAllForces(dt);
+
+		for (Particle& particle : particles)
+		{
+			particle.KickVelocity(dt / 2.0);
+		}
+
+		for (Particle& particle : particles)
+		{
+			particle.DriftPosition(dt);
+		}
+
+		ClearAllForces();
+
+
+		// Tweede krachtevaluatie op de nieuwe posities na de drift.
+		
+		ApplyAllForces(dt);
+
+		for (Particle& particle : particles)
+		{
+			particle.KickVelocity(dt / 2.0);
+		}
+
+		ClearAllForces();
+	}
+
+
+
+	// Eenmalige positie-relaxatie zonder snelheid af te leiden. Dit is nodig, omdat CreateAtom
+	// elektronen positioneert op een cirkel rond hun eigen nucleus, maar zodra BondAtoms twee
+	// elektronen van verschillende atomen aan elkaar koppelt met een PairingBond, staan die
+	// twee elektronen vrijwel zeker niet op de juiste afstand van elkaar.
+	// 
+	// Zonder deze stap zou de eerste Step() een grote kunstmatige snelheids-kkick geven zodra
+	// Morse het grote verschil in één klap probeert te corrigeren.
+
+	void PreSolve()
+	{
+		for (int iteration = 0; iteration < configuration.preSolveIterationCount; ++iteration)
+		{
+			for (const Bond& bond : bonds)
+			{
+				Particle& particleA = particles[bond.particleIndexA];
+				Particle& particleB = particles[bond.particleIndexB];
+
+
+				Vector2 delta = particleB.GetPosition() - particleA.GetPosition();
+				Real distance = delta.Length();
+
+				if (distance < configuration.minimumDistance)
+				{
+					distance = configuration.minimumDistance;
+				}
+
+				Vector2 direction = delta / distance;
+
+
+				Real correction = distance - bond.restLength;
+
+
+				// Massa-gewogen verdeling: een lichter deeltje verplaatst meer dan een
+				// zwaarder deeltje. Zo blijven nuclei grotendeels op hun plek en schikken
+				// vooral de elektronen zich, wat ook logsicher is.
+
+				Real totalMass = particleA.GetMass() + particleB.GetMass();
+
+				Real weightA = particleB.GetMass() / totalMass;
+				Real weightB = particleA.GetMass() / totalMass;
+
+
+				particleA.SetPosition(particleA.GetPosition() + direction * (correction * weightA));
+				particleB.SetPosition(particleB.GetPosition() - direction * (correction * weightB));
+			}
+		}
 	}
 
 
@@ -345,6 +421,27 @@ private:
 
 
 			particle.ApplyForce(frictionForce + noiseForce);
+		}
+	}
+
+
+
+	// Berekent alle krachten voor deze evaluaite.
+	// Wordt twee keer per Step() aangeroepen: op de oude positie en op de nieuwe positie.
+
+	void ApplyAllForces(Real dt)
+	{
+		ApplyPairwiseForces();
+		ApplyBondForces();
+		ApplyLangevinForces(dt);
+	}
+
+
+	void ClearAllForces()
+	{
+		for (Particle& particle : particles)
+		{
+			particle.ClearForce();
 		}
 	}
 

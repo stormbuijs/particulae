@@ -23,7 +23,15 @@ public:
 
 	void Start()
 	{
-		simulation.CreateAtom(ElementType::Oxygen, Vector2{ 0.0, 0.0 });
+		Atom oxygen = simulation.CreateAtom(ElementType::Oxygen, Vector2{ 0.0, 0.0 });
+		Atom hydrogenA = simulation.CreateAtom(ElementType::Hydrogen, Vector2{ -100.0, -60.0 });
+		Atom hydrogenB = simulation.CreateAtom(ElementType::Hydrogen, Vector2{ 90.0, -30.0 });
+
+		simulation.BondAtoms(oxygen, hydrogenA);
+		simulation.BondAtoms(oxygen, hydrogenB);
+
+		
+		simulation.PreSolve();
 	}
 
 
