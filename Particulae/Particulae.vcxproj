@@ -147,6 +147,7 @@
     <ClInclude Include="src\Physics\Simulation.h" />
     <ClInclude Include="src\Physics\SimulationConfiguration.h" />
     <ClInclude Include="src\Rendering\Camera.h" />
+    <ClInclude Include="src\Rendering\Renderer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />

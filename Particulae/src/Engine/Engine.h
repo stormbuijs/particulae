@@ -1,7 +1,9 @@
 #pragma once
 
-#include "../Physics/Simulation.h"
+#include "../Rendering/Renderer.h"
 #include "../Rendering/Camera.h"
+
+#include "../Physics/Simulation.h"
 
 #include <SFML/Graphics.hpp>
 #include <optional>
@@ -15,13 +17,13 @@ public:
 
 	Engine() : window(sf::VideoMode({ 1280u, 720u }), "Particulae")
 	{
-
+		window.setView(view);
 	}
 
 
 	void Start()
 	{
-
+		simulation.CreateAtom(ElementType::Oxygen, Vector2{ 0.0, 0.0 });
 	}
 
 
@@ -34,6 +36,10 @@ public:
 				if (event->is<sf::Event::Closed>())
 				{
 					window.close();
+				}
+				else if (const auto* resized = event->getIf<sf::Event::Resized>())
+				{
+					AdjustViewToWindow(resized->size.x, resized->size.y);
 				}
 			}
 
@@ -49,7 +55,12 @@ public:
 			}
 
 
+			UpdateViewFromCamera();
+
+			renderer.Update(simulation.GetParticles());
+
 			window.clear(sf::Color::Black);
+			renderer.Draw(window);
 			window.display();
 		}
 	}
@@ -112,6 +123,7 @@ private:
 
 
 	Simulation simulation;
+	Renderer renderer;
 
 	sf::Clock clock;
 	sf::RenderWindow window;

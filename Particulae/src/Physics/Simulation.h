@@ -8,6 +8,9 @@
 
 #include <vector>
 #include <cmath>
+#include <unordered_set>
+#include <utility>
+#include <random>
 
 
 
@@ -31,9 +34,9 @@ struct Bond
 
 struct Atom
 {
-	ElementType type;
+	ElementType type{ ElementType::Hydrogen };
 
-	size_t nucleusIndex;
+	size_t nucleusIndex{ 0 };
 
 	std::vector<size_t> electronIndicies;
 };
@@ -190,9 +193,169 @@ private:
 
 
 
+	// Comprimeert twee deeltje-indices tot één sleutel, ongeacht de volgorde.
+	// Dit wordt gebruikt om PairingBond-paren snel op te kunnen zoeken tijdens de krachtenloop.
+
+	static uint64_t MakePairKey(size_t indexA, size_t indexB)
+	{
+		if (indexA > indexB)
+		{
+			std::swap(indexA, indexB);
+		}
+
+		return (static_cast<uint64_t>(indexA) << 32) | static_cast<uint64_t>(indexB);
+	}
+
+
+
+	// Eén keer per Step() worden alle elektronenparen opgebouwd die via een PairingBond aan
+	// elkaar gekoppeld zijn. Deze worden dus uitgesloten van Coulomb- en Pauli-krachten met elkaar.
+
+	std::unordered_set<uint64_t> BuildExcludedPairSet() const
+	{
+		std::unordered_set<uint64_t> excludedPairs;
+
+
+		for (const Bond& bond : bonds)
+		{
+			if (bond.kind == BondKind::PairingBond)
+			{
+				excludedPairs.insert(MakePairKey(bond.particleIndexA, bond.particleIndexB));
+			}
+		}
+
+
+		return excludedPairs;
+	}
+
+
+
+	// Coulomb met Plummer-softening en Pauli-uitsluiting tussen elk paar deeltjes dat niet
+	// is uitgesloten. Beide krachten werken langs dezelfde as (de directe lijn tussen de twee
+	// deeltjes), dus worden per paar in één keer opgeteld en toegepast.
+
+	void ApplyPairwiseForces()
+	{
+		std::unordered_set<uint64_t> excludedPairs = BuildExcludedPairSet();
+
+
+		for (size_t indexA = 0; indexA < particles.size(); ++indexA)
+		{
+			for (size_t indexB = indexA + 1; indexB < particles.size(); ++indexB)
+			{
+				if (excludedPairs.contains(MakePairKey(indexA, indexB)))
+				{
+					continue;
+				}
+
+
+				Vector2 delta = particles[indexB].GetPosition() - particles[indexA].GetPosition();
+				Real distance = delta.Length();
+
+				if (distance < configuration.minimumDistance)
+				{
+					distance = configuration.minimumDistance;
+				}
+
+				Vector2 direction = delta / distance;
+
+
+				// Coulomb: F = k_e * q1 * q2 / (r^2 + softening^2).
+				// Bij een gelijke lading positief, dus afstotend,
+				// bij een ongelijke lading negatief, dus aantrekkend.
+
+				Real softenedDistanceSquared = distance * distance + configuration.coulombSoftening * configuration.coulombSoftening;
+				Real coulombMagnitude = configuration.coulombConstant * particles[indexA].GetCharge() * particles[indexB].GetCharge() / softenedDistanceSquared;
+
+
+				// Pauli: F = strength * (radius / r)^12.
+				// Altijd afstotend, ongeacht de lading.
+
+				Real pauliMagnitude = configuration.pauliRepulsionStrength * std::pow(configuration.pauliRepulsionRadius / distance, 12.0);
+
+
+				Vector2 totalForce = direction * (coulombMagnitude + pauliMagnitude);
+
+
+				// De derde wet van Newton: tegengestelde kracht op beide deeltjes.
+
+				particles[indexA].ApplyForce(-totalForce);
+				particles[indexB].ApplyForce(totalForce);
+			}
+		}
+	}
+
+
+
+	// Morse-potentiaal per binding: F(r) = 2 * D_e * a * (exp(-a(r - r0)) - exp(-2a(r - r0))).
+	// Geld voor zowel AtomicBond en PairingBond, met eigen parameters per type.
+	// Deze bindingen zijn breekbaar: bij grote uirekking naderen beide exp-termen naar 0.
+
+	void ApplyBondForces()
+	{
+		for (const Bond& bond : bonds)
+		{
+			bool isAtomicBond = (bond.kind == BondKind::AtomicBond);
+			
+			Real wellDepth = isAtomicBond ? configuration.morseWellDepth : configuration.pairMorseWellDepth;
+			Real width = isAtomicBond ? configuration.morseWidth : configuration.pairMorseWidth;
+
+
+			Vector2 delta = particles[bond.particleIndexB].GetPosition() - particles[bond.particleIndexA].GetPosition();
+			Real distance = delta.Length();
+
+			if (distance < configuration.minimumDistance)
+			{
+				distance = configuration.minimumDistance;
+			}
+
+			Vector2 direction = delta / distance;
+
+
+			Real exponent = std::exp(-width * (distance - bond.restLength));
+			Real morseForceMagnitude = 2.0 * wellDepth * width * (exponent - exponent * exponent);
+
+
+			// Postieve morseForceMagnitude is een binding die uitrekt (r > r0):
+			// de kracht terkt de twee deeltjes naar elkaar toe.
+
+			particles[bond.particleIndexA].ApplyForce(direction * morseForceMagnitude);
+			particles[bond.particleIndexB].ApplyForce(direction * (-morseForceMagnitude));
+		}
+	}
+
+
+
+	// Langevin-demping: wrijving (-γv) + thermische ruis.
+	// De ruis wordt geschaald met 1 / sqrt(Δt) zodat het effectieve temperatuurgedrag
+	// onafhankelijk blijft van de gekozen update-rate.
+
+	void ApplyLangevinForces(Real dt)
+	{
+		std::normal_distribution<Real> distribution(0.0, 1.0);
+
+		for (Particle& particle : particles)
+		{
+			Vector2 frictionForce = particle.GetVelocity() * (-configuration.langevinFriction);
+
+			Vector2 noiseForce{
+				configuration.langevinNoise * distribution(randomEngine) / std::sqrt(dt),
+				configuration.langevinNoise * distribution(randomEngine) / std::sqrt(dt)
+			};
+
+
+			particle.ApplyForce(frictionForce + noiseForce);
+		}
+	}
+
+
+
 	SimulationConfiguration configuration;
 
 	std::vector<Particle> particles;
 	std::vector<Bond> bonds;
+
+
+	std::mt19937 randomEngine{ std::random_device{}() };
 
 };
