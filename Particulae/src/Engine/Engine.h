@@ -23,12 +23,24 @@ public:
 
 	void Start()
 	{
-		Atom oxygen = simulation.CreateAtom(ElementType::Oxygen, Vector2{ 0.0, 0.0 });
-		Atom hydrogenA = simulation.CreateAtom(ElementType::Hydrogen, Vector2{ -100.0, -60.0 });
-		Atom hydrogenB = simulation.CreateAtom(ElementType::Hydrogen, Vector2{ 90.0, -30.0 });
+		Atom oxygenAtom = simulation.CreateAtom(ElementType::Oxygen, Vector2{ 0.0, 0.0 });
+		Atom hydrogenAAtom = simulation.CreateAtom(ElementType::Hydrogen, Vector2{ -70, -20.0 });
+		Atom hydrogenBAtom = simulation.CreateAtom(ElementType::Hydrogen, Vector2{ 60.0, -25.0 });
 
-		simulation.BondAtoms(oxygen, hydrogenA);
-		simulation.BondAtoms(oxygen, hydrogenB);
+		simulation.BondAtoms(oxygenAtom, hydrogenAAtom);
+		simulation.BondAtoms(oxygenAtom, hydrogenBAtom);
+
+
+		Atom carbonAtom = simulation.CreateAtom(ElementType::Carbon, Vector2{ 250.0, 0.0 });
+		Atom methaneHydrogenA = simulation.CreateAtom(ElementType::Hydrogen, Vector2{ 180.0, -55.0 });
+		Atom methaneHydrogenB = simulation.CreateAtom(ElementType::Hydrogen, Vector2{ 305.0, -50.0 });
+		Atom methaneHydrogenC = simulation.CreateAtom(ElementType::Hydrogen, Vector2{ 210.0, 60.0 });
+		Atom methaneHydrogenD = simulation.CreateAtom(ElementType::Hydrogen, Vector2{ 295.0, 55.0 });
+
+		simulation.BondAtoms(carbonAtom, methaneHydrogenA);
+		simulation.BondAtoms(carbonAtom, methaneHydrogenB);
+		simulation.BondAtoms(carbonAtom, methaneHydrogenC);
+		simulation.BondAtoms(carbonAtom, methaneHydrogenD);
 
 		
 		simulation.PreSolve();

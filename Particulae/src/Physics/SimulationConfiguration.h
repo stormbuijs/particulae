@@ -10,8 +10,8 @@ struct SimulationConfiguration
 {
 	// Morse-potentiaal
 
-	Real morseWellDepth = 50.0;
-	Real morseWidth = 0.3;
+	Real morseWellDepth = 600.0;
+	Real morseWidth = 0.25;
 	Real morseRestLength = 20.0;
 
 
@@ -38,15 +38,15 @@ struct SimulationConfiguration
 	Real electronMass = 0.05;
 	Real electronRadius = 3.0;
 	Real electronCharge = -1.0;
-	Real electronPairDistance = 4.0;
 
-	Real pairMorseWellDepth = 20.0;
-	Real pairMorseWidth = 0.5;
+	Real electronPairDistance = 4.0;
+	Real pairMorseWellDepth = 400.0;
+	Real pairMorseWidth = 0.8;
 
 
 	// Nucleus
 
-	Real nucleusRadius = 12.0;
+	Real nucleusRadius = 6.0;
 
 
 	// Aantal positie-relaxatie-iteraties in PreSolve()
