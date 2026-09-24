@@ -139,6 +139,8 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\Editor\DragTool.h" />
+    <ClInclude Include="src\Editor\Tool.h" />
     <ClInclude Include="src\Engine\Engine.h" />
     <ClInclude Include="src\Math\Real.h" />
     <ClInclude Include="src\Math\Vector2.h" />

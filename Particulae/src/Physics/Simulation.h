@@ -11,6 +11,7 @@
 #include <unordered_set>
 #include <utility>
 #include <random>
+#include <optional>
 
 
 
@@ -137,6 +138,20 @@ public:
 		size_t electronB = FindUnpairedElectron(atomB);
 
 		AddBond(electronA, electronB, configuration.electronPairDistance, BondKind::PairingBond);
+	}
+
+
+
+	void SetDragTarget(size_t particleIndex, Vector2 targetPosition)
+	{
+		dragParticleIndex = particleIndex;
+		dragTargetPosition = targetPosition;
+	}
+
+
+	void ClearDragTarget()
+	{
+		dragParticleIndex.reset();
 	}
 
 
@@ -426,6 +441,25 @@ private:
 
 
 
+	// Een Hookse veer richting de muispositie, alleen actief als er een dragParticleIndex is gezet.
+	// Bewust geen Morse-veer. Bij het slepen moet de kracht blijven toenemen met de afstand.
+
+	void ApplyDragForce()
+	{
+		if (!dragParticleIndex)
+		{
+			return;
+		}
+
+
+		Particle& particle = particles[*dragParticleIndex];
+		Vector2 delta = dragTargetPosition - particle.GetPosition();
+
+		particle.ApplyForce(delta * configuration.dragSpringStrength);
+	}
+
+
+
 	// Berekent alle krachten voor deze evaluaite.
 	// Wordt twee keer per Step() aangeroepen: op de oude positie en op de nieuwe positie.
 
@@ -434,6 +468,7 @@ private:
 		ApplyPairwiseForces();
 		ApplyBondForces();
 		ApplyLangevinForces(dt);
+		ApplyDragForce();
 	}
 
 
@@ -451,6 +486,9 @@ private:
 
 	std::vector<Particle> particles;
 	std::vector<Bond> bonds;
+
+	std::optional<size_t> dragParticleIndex;
+	Vector2 dragTargetPosition;
 
 
 	std::mt19937 randomEngine{ std::random_device{}() };

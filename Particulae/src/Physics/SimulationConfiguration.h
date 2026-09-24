@@ -49,6 +49,11 @@ struct SimulationConfiguration
 	Real nucleusRadius = 6.0;
 
 
+	// Tools
+
+	Real dragSpringStrength = 10.0;
+
+
 	// Aantal positie-relaxatie-iteraties in PreSolve()
 	int preSolveIterationCount = 20;
 

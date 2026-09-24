@@ -5,8 +5,11 @@
 
 #include "../Physics/Simulation.h"
 
+#include "../Editor/DragTool.h"
+
 #include <SFML/Graphics.hpp>
 #include <optional>
+#include <memory>
 
 
 
@@ -44,6 +47,9 @@ public:
 
 		
 		simulation.PreSolve();
+
+
+		activeTool = std::make_unique<DragTool>(simulation);
 	}
 
 
@@ -60,6 +66,24 @@ public:
 				else if (const auto* resized = event->getIf<sf::Event::Resized>())
 				{
 					AdjustViewToWindow(resized->size.x, resized->size.y);
+				}
+				else if (const auto* pressed = event->getIf<sf::Event::MouseButtonPressed>())
+				{
+					if (pressed->button == sf::Mouse::Button::Left)
+					{
+						activeTool->OnMousePressed(ScreenToWorld(pressed->position));
+					}
+				}
+				else if (const auto* moved = event->getIf<sf::Event::MouseMoved>())
+				{
+					activeTool->OnMouseMoved(ScreenToWorld(moved->position));
+				}
+				else if (const auto* released = event->getIf<sf::Event::MouseButtonReleased>())
+				{
+					if (released->button == sf::Mouse::Button::Left)
+					{
+						activeTool->OnMouseReleased();
+					}
 				}
 			}
 
@@ -142,6 +166,15 @@ private:
 
 
 
+	Vector2 ScreenToWorld(sf::Vector2i pixelPosition) const
+	{
+		sf::Vector2f worldPosition = window.mapPixelToCoords(pixelPosition, view);
+
+		return Vector2{ static_cast<Real>(worldPosition.x), static_cast<Real>(worldPosition.y) };
+	}
+
+
+
 	Simulation simulation;
 	Renderer renderer;
 
@@ -153,6 +186,9 @@ private:
 
 	sf::Vector2f baseViewSize{ 1280.f, 720.f };
 	sf::View view;
+
+
+	std::unique_ptr<Tool> activeTool;
 
 
 	// De simulatie staat vast op 1000 Hz, omdat onderdelen
